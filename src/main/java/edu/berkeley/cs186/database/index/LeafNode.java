@@ -7,8 +7,10 @@ import edu.berkeley.cs186.database.databox.DataBox;
 import edu.berkeley.cs186.database.databox.Type;
 import edu.berkeley.cs186.database.memory.BufferManager;
 import edu.berkeley.cs186.database.memory.Page;
+import edu.berkeley.cs186.database.query.disk.Partition;
 import edu.berkeley.cs186.database.table.RecordId;
 
+import javax.swing.*;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -118,6 +120,7 @@ class LeafNode extends BPlusNode {
              rightSibling, treeContext);
     }
 
+
     /**
      * Construct a leaf node that is persisted to page `page`.
      */
@@ -146,17 +149,18 @@ class LeafNode extends BPlusNode {
     // See BPlusNode.get.
     @Override
     public LeafNode get(DataBox key) {
-        // TODO(proj2): implement
 
-        return null;
+        return this;
     }
 
     // See BPlusNode.getLeftmostLeaf.
     @Override
     public LeafNode getLeftmostLeaf() {
-        // TODO(proj2): implement
-
-        return null;
+        // note that the keys are in order , so the smallest key is the key belongs to the most left leaf
+        DataBox theSmallestKey = keys.get(0) ;
+        RecordId id = rids.get(theSmallestKey.getInt());
+        long pageNum = id.getPageNum();
+        return LeafNode.fromBytes(metadata , bufferManager , treeContext , pageNum);
     }
 
     // See BPlusNode.put.
@@ -177,9 +181,14 @@ class LeafNode extends BPlusNode {
     }
 
     // See BPlusNode.remove.
+    // you need to check if the leaf node becomes the same as the demonstration in BPlusNode class after the removal
     @Override
     public void remove(DataBox key) {
-        // TODO(proj2): implement
+
+        if(keys.contains(key)) {
+            keys.remove(key) ;
+            rids.remove(key.getInt());
+        }
 
         return;
     }
@@ -249,6 +258,15 @@ class LeafNode extends BPlusNode {
     // Just for testing.
     List<RecordId> getRids() {
         return rids;
+    }
+    RecordId getRidRelatedToKey(DataBox key) {
+        try{
+            return rids.get(key.getInt()) ;
+        }
+        catch (Exception e){
+            return null ;
+        }
+
     }
 
     /**
@@ -368,16 +386,36 @@ class LeafNode extends BPlusNode {
     }
 
     /**
-     * Loads a leaf node from page `pageNum`.
+     * Loads a leaf node from page `pageNum`. read a leaf node from a page
+     * so , first i need info about the leaf i get ( (key) ) -> metadata
+     * from where i get this leaf -> i need the pageNum which require a buffer to access pages -> bufferManager
      */
     public static LeafNode fromBytes(BPlusTreeMetadata metadata, BufferManager bufferManager,
                                      LockContext treeContext, long pageNum) {
-        // TODO(proj2): implement
-        // Note: LeafNode has two constructors. To implement fromBytes be sure to
-        // use the constructor that reuses an existing page instead of fetching a
-        // brand new one.
 
-        return null;
+        // get the page of this kid
+        Page p = bufferManager.fetchPage(treeContext, pageNum) ;
+        // now get the buffer over this page to loop over every byte stored in -> see the page class for more
+        Buffer buffer  = p.getBuffer() ;
+        // now check if this node in this kind of page at buffer is leaf or not ,, the first 1 byte indicates that
+        // so you need to know how to loop ?? we will not loop but use get() function which give us the all bytes stored
+        // in the buffer ,,,,, there is another similar function called get(int index) which allow you to get from specified index
+        byte nodeType = buffer.get();
+        assert(nodeType == (byte) 1);
+        long rightsib = buffer.getLong() ;
+        List<DataBox> keys = new ArrayList<>();
+        List<RecordId> rids = new ArrayList<>();
+        int n = buffer.getInt();
+
+
+        for (int i = 0; i < n; ++i) {
+            keys.add(DataBox.fromBytes(buffer, metadata.getKeySchema()));
+            rids.add(RecordId.fromBytes(buffer))  ;
+        }
+
+        if(rightsib >= 0 ) return new LeafNode(metadata , bufferManager,p , keys , rids , Optional.of(rightsib) , treeContext) ;
+        else return new LeafNode(metadata , bufferManager,p , keys , rids , Optional.empty() , treeContext) ;
+
     }
 
     // Builtins ////////////////////////////////////////////////////////////////

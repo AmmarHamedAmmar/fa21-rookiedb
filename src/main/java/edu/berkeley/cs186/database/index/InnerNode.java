@@ -45,6 +45,11 @@ class InnerNode extends BPlusNode {
     private List<DataBox> keys;
     private List<Long> children;
 
+
+    // if page.getBuffer().get == 1 , that means this this node is a leaf node
+    final byte leafNode = 1 ;
+
+
     // Constructors ////////////////////////////////////////////////////////////
     /**
      * Construct a brand new inner node.
@@ -80,18 +85,61 @@ class InnerNode extends BPlusNode {
     // See BPlusNode.get.
     @Override
     public LeafNode get(DataBox key) {
-        // TODO(proj2): implement
 
-        return null;
+        return BinarySearch(key) ;
+
     }
+    // we need a better way of code here instead of this spakety code
+    private LeafNode BinarySearch(DataBox key) {
+        int index = 0 ;
+
+
+        for(DataBox k : keys) {
+
+            if( key.getInt() <  k.getInt()   ){
+
+                long pageNum = children.get(index) ;
+
+                if(isLeafNode(pageNum)) {
+                    return LeafNode.fromBytes(metadata , bufferManager , treeContext , pageNum) ;
+                }
+                InnerNode newNode = fromBytes(metadata , bufferManager , treeContext , pageNum);
+                return BinarySearch(key) ;
+            }
+            else{
+                index++ ;
+                if(index == keys.size() && key.getInt() >=  k.getInt()  ){
+                    long pageNum = children.get(index) ;
+                    return LeafNode.fromBytes(metadata , bufferManager , treeContext , pageNum);
+                }
+
+            }
+        }
+
+        return null ;
+    }
+
+    private boolean isLeafNode(long pageNum) {
+        Page p = bufferManager.fetchPage(treeContext, pageNum) ;
+        Buffer buffer  = p.getBuffer() ;
+        byte nodeType = buffer.get();
+        p.unpin();
+        return nodeType == leafNode;
+    }
+
 
     // See BPlusNode.getLeftmostLeaf.
     @Override
     public LeafNode getLeftmostLeaf() {
         assert(children.size() > 0);
-        // TODO(proj2): implement
+        long pageNum = children.get(0) ;
 
-        return null;
+        while(!isLeafNode(pageNum)) {
+            InnerNode newNode = fromBytes(metadata , bufferManager , treeContext , pageNum) ;
+            pageNum = children.get(0) ;
+        }
+
+        return LeafNode.fromBytes(metadata , bufferManager , treeContext , pageNum) ;
     }
 
     // See BPlusNode.put.
@@ -114,7 +162,8 @@ class InnerNode extends BPlusNode {
     // See BPlusNode.remove.
     @Override
     public void remove(DataBox key) {
-        // TODO(proj2): implement
+        LeafNode node = get(key) ;
+        node.remove(key);
 
         return;
     }

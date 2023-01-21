@@ -60,6 +60,7 @@ public class BPlusTree {
     // root of the B+ tree
     private BPlusNode root;
 
+
     // lock context for the B+ tree
     private LockContext lockContext;
 
@@ -145,8 +146,9 @@ public class BPlusTree {
         // TODO(proj4_integration): Update the following line
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
-        // TODO(proj2): implement
-
+        InnerNode node = InnerNode.fromBytes(metadata , bufferManager ,lockContext , metadata.getRootPageNum()) ;
+        RecordId rids = node.get(key).getRidRelatedToKey(key) ;
+        if(rids != null) return Optional.of(rids) ;
         return Optional.empty();
     }
 
@@ -305,8 +307,9 @@ public class BPlusTree {
         typecheck(key);
         // TODO(proj4_integration): Update the following line
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
-
-        // TODO(proj2): implement
+         ;
+        InnerNode node = InnerNode.fromBytes(metadata , bufferManager ,lockContext , metadata.getRootPageNum()) ;
+        node.remove(key);
 
         return;
     }

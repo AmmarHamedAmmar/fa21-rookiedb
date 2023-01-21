@@ -11,9 +11,9 @@ import edu.berkeley.cs186.database.cli.parser.TokenMgrError;
 import edu.berkeley.cs186.database.cli.visitor.StatementListVisitor;
 import edu.berkeley.cs186.database.concurrency.LockManager;
 import edu.berkeley.cs186.database.memory.ClockEvictionPolicy;
-import edu.berkeley.cs186.database.table.Record;
 import edu.berkeley.cs186.database.table.Schema;
 import edu.berkeley.cs186.database.table.Table;
+import edu.berkeley.cs186.database.table.Record;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
