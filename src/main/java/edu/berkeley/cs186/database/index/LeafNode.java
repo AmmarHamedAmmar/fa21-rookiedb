@@ -397,7 +397,7 @@ class LeafNode extends BPlusNode {
         Page p = bufferManager.fetchPage(treeContext, pageNum) ;
         // now get the buffer over this page to loop over every byte stored in -> see the page class for more
         Buffer buffer  = p.getBuffer() ;
-        // now check if this node in this kind of page at buffer is leaf or not ,, the first 1 byte indicates that
+        // now check if this node in this kind of page at buffer is leaf or not , the first 1 byte indicates that
         // so you need to know how to loop ?? we will not loop but use get() function which give us the all bytes stored
         // in the buffer ,,,,, there is another similar function called get(int index) which allow you to get from specified index
         byte nodeType = buffer.get();
@@ -414,7 +414,7 @@ class LeafNode extends BPlusNode {
         }
 
         if(rightsib >= 0 ) return new LeafNode(metadata , bufferManager,p , keys , rids , Optional.of(rightsib) , treeContext) ;
-        else return new LeafNode(metadata , bufferManager,p , keys , rids , Optional.empty() , treeContext) ;
+        return new LeafNode(metadata , bufferManager,p , keys , rids , Optional.empty() , treeContext) ;
 
     }
 
